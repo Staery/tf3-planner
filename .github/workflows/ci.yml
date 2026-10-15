@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # the planner targets Windows (registry/Steam discovery, launcher); tests that need a
+    # real game export (data/export.json) are skipped on CI
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: packaging/requirements.txt
+
+      - name: Install
+        run: pip install -r packaging/requirements.txt pytest
+
+      - name: Pytest
+        run: python -X utf8 -m pytest -q
