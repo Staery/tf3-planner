@@ -1,0 +1,15 @@
+{
+    "authors": [
+        {
+            "name": "Staery",
+            "role": "CREATOR"
+        }
+    ],
+    "description": "TF3 Planner - logistics planning toolkit for Transport Fever 3.\n\nIn-game part (this mod):\n- \"TF3 Planner: Export\" button: saves your map (terrain, towns, industries, cargo chains, roads/rails, stations, lines, vehicles, finances) to a local file in your game user folder (tf3_planner/export.lua).\n- \"Blueprint\" window (Чертёж): shows the plan computed by the desktop planner right in the game - where to build tracks, roads and stations, project by project, with progress of what is already built.\n\nThe export works on its own. The blueprint needs the free desktop app TF3 Planner (Windows): it reads the export, finds profitable cargo and passenger routes (mathematical optimization), simulates the economy year by year and writes the plan back for the blueprint window. Download link and instructions are on this mod page.\n\nEverything stays on your PC: no network access, no telemetry. The mod only reads game state through the official modding API and writes its own files via app.saveUserdata. It adds no assets and does not change game rules or the simulation.\n\n---\n\nTF3 Planner - набор для планирования логистики. Кнопка «TF3 Planner: Export» сохраняет карту в локальный файл; окно «Чертёж» показывает в игре план, рассчитанный настольной программой TF3 Planner (Windows, бесплатно): где строить пути, дороги и станции, по проектам. Экспорт работает и без программы. Все данные остаются на вашем компьютере.",
+    "name": "TF3 Planner",
+    "summary": "Export your map and see an optimized logistics plan as an in-game blueprint (with the free TF3 Planner desktop app)",
+    "tags": [
+        "Script Mod"
+    ],
+    "url": ""
+}

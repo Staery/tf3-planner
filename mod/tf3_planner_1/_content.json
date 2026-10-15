@@ -1,0 +1,18 @@
+{
+    "archives": null,
+    "files": [
+        "gui/tf3_planner/tf3_planner_button.res.lua",
+        "gui/tf3_planner/tf3_planner_button.script.lua",
+        "tf3_planner/blueprint.lua",
+        "tf3_planner/capture.lua",
+        "tf3_planner/common.lua",
+        "tf3_planner/dump.lua",
+        "tf3_planner/export.lua",
+        "tf3_planner/network.lua",
+        "tf3_planner/schema.lua",
+        "tf3_planner/stats.lua",
+        "tf3_planner/tf3p_gui.gs.lua",
+        "tf3_planner/tf3p_gui.script.lua",
+        "tf3_planner/townbuildings.lua"
+    ]
+}
