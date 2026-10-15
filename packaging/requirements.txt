@@ -1,0 +1,14 @@
+# Runtime dependencies of the desktop planner (pinned to the versions it is developed and tested with).
+# Dev:     python -m venv .venv && .venv\Scripts\pip install -r packaging\requirements.txt
+# Build:   packaging\build.ps1 installs this file + PyInstaller into .venv-build
+numpy==2.5.3
+scipy==1.18.1
+lupa==2.8
+fastapi==0.142.2
+starlette==1.7.0
+pydantic==2.13.5
+uvicorn==0.54.0
+pillow==12.3.0
+# optional TSP / routing backends (tours.py falls back to its own heuristics without them)
+elkai==2.0.1
+ortools==9.15.6755

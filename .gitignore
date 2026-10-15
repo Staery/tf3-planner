@@ -1,0 +1,19 @@
+# local environments / build output
+.venv/
+.venv-build/
+build/
+dist/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# player data: exports of your maps, plans, logs, settings (never publish)
+data/
+data_export.json
+
+# the Mod Hub link of the author's upload (kept locally by deploy.py, excluded from packages)
+mod/tf3_planner_1/_metadata/mod.io_fileid.txt
+
+# logs and tool caches
+*.log
+.ruff_cache/
