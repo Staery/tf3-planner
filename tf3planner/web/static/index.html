@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TF3 Планировщик — карта</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">TF3 Планировщик</div>
+  <div class="search">
+    <input id="search" type="search" placeholder="Поиск города или предприятия…" autocomplete="off">
+    <ul id="search-results" hidden></ul>
+  </div>
+  <div class="layers" id="layers">
+    <label><input type="checkbox" data-layer="towns" checked> Города</label>
+    <label><input type="checkbox" data-layer="industries" checked> Предприятия</label>
+    <label><input type="checkbox" data-layer="chains"> Цепочки</label>
+    <label title="Все трассы из routes.json (тоже только выбранного года)"><input type="checkbox" data-layer="routes"> Маршруты</label>
+    <label title="Линии плана выбранного года"><input type="checkbox" data-layer="plan" checked> План</label>
+    <label title="Станции, порты, склады, депо, мосты линий выбранного года"><input type="checkbox" data-layer="buildings" checked> Здания</label>
+    <label title="Улицы, дороги и пути, уже построенные в игре (из экспорта)"><input type="checkbox" data-layer="network" checked> Дороги и пути (из игры)</label>
+    <label title="Показывать на карте только текущий проект (клавиша F)"><input type="checkbox" id="focus-toggle"> Фокус на проекте</label>
+  </div>
+  <div class="status" id="status">Загрузка…</div>
+  <div class="lang-switch" role="group" aria-label="Language"><button data-lang="ru" title="Русский">RU</button><button data-lang="en" title="English">EN</button></div>
+  <a href="/control.html" target="tf3control" title="Центр управления: обновить данные, пересчитать план, установить мод" style="color:var(--text);text-decoration:none;white-space:nowrap;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-3)">⚙ Управление</a>
+</header>
+
+<main>
+  <div id="map-wrap">
+    <canvas id="map"></canvas>
+    <div id="tooltip" hidden></div>
+    <div id="legend">
+      <div class="legend-title">Легенда <button id="legend-toggle" title="Свернуть">–</button></div>
+      <div id="legend-body"></div>
+    </div>
+    <div id="coords"></div>
+    <div id="net-note" hidden><span class="nn-text">Дорожная сеть ещё не выгружена — перезапустите игру и нажмите экспорт</span><button type="button" title="Скрыть" onclick="this.parentElement.hidden = true">×</button></div>
+    <div id="focus-banner" hidden></div>
+    <div id="guide-legend" hidden></div>
+    <div id="yearbox">
+      <div class="yb-row">
+        <button id="yb-prev" title="Предыдущий год с работами (← / → — на 1 год)">◀</button>
+        <div class="yb-year" id="yb-year" title="На карте только то, что делаем в этом году">—</div>
+        <button id="yb-next" title="Следующий год с работами">▶</button>
+      </div>
+      <div class="yb-info" id="yb-info"></div>
+      <label class="yb-built" title="Бледно показать линии, построенные в прошлые годы"><input type="checkbox" id="show-built"> Показать построенное ранее</label>
+      <div class="yb-focus" id="yb-focus" hidden></div>
+    </div>
+    <div class="zoom-btns">
+      <button id="zoom-in" title="Приблизить">+</button>
+      <button id="zoom-out" title="Отдалить">−</button>
+      <button id="zoom-fit" title="Вся карта">⤢</button>
+    </div>
+  </div>
+
+  <aside id="panel">
+    <section class="plan-head" id="plan-head">
+      <div class="plan-title" id="plan-title">План</div>
+      <div class="plan-objective" id="plan-objective"></div>
+      <div class="plan-summary" id="plan-summary"></div>
+    </section>
+
+    <section class="project-current" id="project-current" hidden></section>
+
+    <section class="timeline">
+      <div class="timeline-row">
+        <button id="year-prev" title="Предыдущий год">◀</button>
+        <input id="year" type="range" min="1900" max="1900" step="1" value="1900">
+        <button id="year-next" title="Следующий год">▶</button>
+        <div class="year-label" id="year-label">—</div>
+      </div>
+      <div class="year-count" id="year-count"></div>
+      <label class="all-years"><input type="checkbox" id="list-all"> Показать шаги всех лет</label>
+    </section>
+
+    <section class="cashflow" id="cashflow-section">
+      <div class="section-title collapsible" id="cashflow-title" title="Свернуть / развернуть">Деньги по годам <span class="chev">▾</span></div>
+      <div class="chart-wrap">
+        <canvas id="cashflow"></canvas>
+        <div id="chart-tip" hidden></div>
+      </div>
+    </section>
+
+    <section class="bottom">
+      <div class="tabs" role="tablist">
+        <button class="tab" data-tab="projects" role="tab">Проекты <span class="tab-count" id="projects-count"></span></button>
+        <button class="tab" data-tab="buildings" role="tab">Здания года <span class="tab-count" id="buildings-count"></span></button>
+        <button class="tab" data-tab="steps" role="tab">Шаги по годам</button>
+      </div>
+      <div class="tab-body" id="tab-projects">
+        <div class="proj-toolbar">
+          <button id="next-project" class="primary" title="Выбрать первый невыполненный проект по порядку плана (клавиша N)">Следующий проект →</button>
+          <input id="proj-filter" type="search" placeholder="Фильтр: город, груз, L5…" autocomplete="off">
+        </div>
+        <div class="proj-toolbar2">
+          <label class="hide-done" title="Показывать только линии, которые строятся в выбранном году"><input type="checkbox" id="proj-year-only" checked> <span id="proj-year-only-label">только этот год</span></label>
+          <label class="hide-done"><input type="checkbox" id="hide-done"> скрыть выполненные</label>
+          <div class="proj-progress" id="proj-progress"></div>
+        </div>
+        <ol id="projects"></ol>
+      </div>
+      <div class="tab-body" id="tab-buildings" hidden>
+        <div class="section-title" id="buildings-title">Здания этого года</div>
+        <div id="buildings-list"></div>
+      </div>
+      <div class="tab-body" id="tab-steps" hidden>
+        <div class="section-title" id="steps-title">Шаги</div>
+        <ol id="steps"></ol>
+      </div>
+    </section>
+  </aside>
+</main>
+<script src="/static/i18n.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

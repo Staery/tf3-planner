@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TF3 Планировщик — центр управления</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='1' y='1' width='30' height='30' rx='6' fill='%231a1a19' stroke='%233987e5' stroke-width='2'/%3E%3Cpath d='M7 24 L14 15 L19 19 L25 9' stroke='%23e66767' stroke-width='3' fill='none'/%3E%3Ccircle cx='7' cy='24' r='3' fill='%23eda100'/%3E%3Ccircle cx='25' cy='9' r='3' fill='%230ca30c'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/control.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">TF3 Планировщик <span class="brand-sub">центр управления</span></div>
+  <a class="hbtn" href="/" target="tf3map" title="Карта с планом (откроется в отдельной вкладке)">🗺 Карта</a>
+  <label class="switch" title="Следить за выгрузкой из игры и пересчитывать план автоматически">
+    <input type="checkbox" id="auto-toggle"><span class="slider"></span>
+    <span class="switch-label">Авторежим</span>
+  </label>
+  <div class="auto-msg" id="auto-msg"></div>
+  <div class="top-right">
+    <span class="srv" id="srv-state">…</span>
+    <div class="lang-switch" role="group" aria-label="Language"><button data-lang="ru" title="Русский">RU</button><button data-lang="en" title="English">EN</button></div>
+    <button class="hbtn danger" id="btn-shutdown" title="Остановить сервер и все задачи">⏻ Выключить</button>
+  </div>
+</header>
+
+<div id="offline" hidden>
+  <div class="offline-box">
+    <div class="offline-title">Сервер выключен</div>
+    <div>Чтобы снова открыть центр управления, запустите <b>TF3 Planner</b> с рабочего стола
+      (или <code>TF3 Planner.bat</code> в папке проекта).</div>
+    <div class="muted" id="offline-wait" hidden>Жду перезапуска сервера…</div>
+  </div>
+</div>
+
+<main id="main">
+  <div class="col-main">
+
+    <section class="actions">
+      <button class="action primary" data-run="update" id="act-update">
+        <span class="a-ico">⟳</span>
+        <span class="a-text"><b>Обновить всё</b><small>выгрузка из игры → калибровка → план → разбор</small></span>
+      </button>
+      <button class="action" data-run="loader">
+        <span class="a-ico">⇩</span>
+        <span class="a-text"><b>Обновить данные из игры</b><small>прочитать export.lua</small></span>
+      </button>
+      <button class="action" data-run="planner">
+        <span class="a-ico">∑</span>
+        <span class="a-text"><b>Пересчитать план</b><small>10–15 минут, в фоне</small></span>
+      </button>
+      <button class="action" data-run="calibration">
+        <span class="a-ico">⚖</span>
+        <span class="a-text"><b>Калибровка</b><small>сверить линии игры с моделью</small></span>
+      </button>
+      <button class="action" data-run="deploy">
+        <span class="a-ico">⚙</span>
+        <span class="a-text"><b>Установить / обновить мод</b><small>скопировать мод в игру</small></span>
+      </button>
+      <a class="action" href="/" target="tf3map">
+        <span class="a-ico">🗺</span>
+        <span class="a-text"><b>Открыть карту</b><small>план, маршруты, текущий проект</small></span>
+      </a>
+      <button class="action" data-run="dossier" id="act-dossier">
+        <span class="a-ico">☰</span>
+        <span class="a-text"><b>Подробный разбор маршрутов</b><small>инструкции по каждой линии</small></span>
+      </button>
+      <div class="action-menu">
+        <button class="action" data-menu="diag-menu">
+          <span class="a-ico">✚</span>
+          <span class="a-text"><b>Диагностика ▾</b><small>отчёты модулей</small></span>
+        </button>
+        <div class="menu" id="diag-menu" hidden></div>
+      </div>
+      <div class="action-menu">
+        <button class="action" data-menu="folder-menu">
+          <span class="a-ico">📁</span>
+          <span class="a-text"><b>Открыть папку ▾</b><small>проект, данные, игра</small></span>
+        </button>
+        <div class="menu" id="folder-menu" hidden>
+          <button data-open="project">Папка проекта</button>
+          <button data-open="data">Данные (plan.json, export.json…)</button>
+          <button data-open="logs">Журналы задач</button>
+          <button data-open="export">Выгрузка игры (export.lua)</button>
+          <button data-open="mods">Моды игры</button>
+          <button data-open="mod_src">Исходники мода</button>
+          <button data-open="gamelog">Журнал игры (stdout.txt)</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="cards" id="cards">
+      <article class="card" id="card-export"><h3>Выгрузка из игры</h3><div class="card-body">…</div></article>
+      <article class="card" id="card-plan"><h3>План</h3><div class="card-body">…</div></article>
+      <article class="card" id="card-mod"><h3>Мод в игре</h3><div class="card-body">…</div></article>
+      <article class="card" id="card-calib"><h3>Калибровка</h3><div class="card-body">…</div></article>
+      <article class="card" id="card-server"><h3>Сервер</h3><div class="card-body">…</div></article>
+    </section>
+
+    <section class="panel" id="jobs-panel">
+      <div class="panel-head">
+        <h2>Задачи</h2>
+        <div class="job-pick" id="job-title">Задач ещё не было</div>
+        <button class="hbtn danger" id="btn-cancel" hidden>✕ Отменить</button>
+      </div>
+      <div class="job-progress" id="job-progress" hidden>
+        <div class="steps" id="job-steps"></div>
+        <div class="bar"><div class="bar-fill" id="bar-fill"></div></div>
+        <div class="bar-text" id="bar-text"></div>
+      </div>
+      <div class="jobs-body">
+        <pre class="log" id="job-log"></pre>
+        <div class="history">
+          <div class="history-title">История (20 последних)</div>
+          <ul id="history"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="game-panel">
+      <div class="panel-head">
+        <h2>Журнал игры</h2>
+        <div class="muted small" id="gamelog-meta"></div>
+        <label class="small"><input type="checkbox" id="gl-mine" checked> только мод и ошибки Lua</label>
+        <button class="hbtn" id="gl-refresh">Обновить</button>
+      </div>
+      <div class="hints" id="hints"></div>
+      <pre class="log game" id="gamelog"></pre>
+    </section>
+  </div>
+
+  <aside class="col-side">
+    <section class="panel">
+      <h2>Как пользоваться</h2>
+      <ol class="guide">
+        <li><b>Установите мод.</b> Кнопка «Установить / обновить мод». После каждого обновления мода
+          <b>полностью перезапустите игру</b> (выход в Windows).</li>
+        <li><b>Включите мод в сейве.</b> При загрузке сохранения откройте вкладку «Моды» в карточке сейва
+          и поставьте галочку «TF3 Planner». Для новой игры — при создании карты.</li>
+        <li><b>Нажмите выгрузку в игре.</b> Внизу экрана кнопка «TF3 Planner: Export»; надпись сменится на
+          «exported».</li>
+        <li><b>План обновится сам.</b> При включённом авторежиме программа заметит новую выгрузку и за
+          10–15 минут пересчитает план — появится уведомление «План обновлён». Без авторежима нажмите «Обновить всё».</li>
+        <li><b>Откройте карту</b> и выберите <b>текущий проект</b> в правой панели: карта покажет, что строить
+          сейчас (клавиша F — только этот проект).</li>
+        <li><b>Повторяйте</b> выгрузку после каждой крупной постройки или раз в игровой год — план и калибровка
+          подстроятся под реальные цифры ваших линий.</li>
+      </ol>
+      <p class="muted small">Окно браузера можно закрыть — программа продолжит работать в фоне. Чтобы
+        остановить её полностью, нажмите «Выключить».</p>
+    </section>
+
+    <section class="panel">
+      <h2>Настройки плана</h2>
+      <form id="settings" autocomplete="off">
+        <label class="row">Горизонт плана, до года
+          <input type="number" name="horizon" min="1850" max="2200" step="1"></label>
+        <label class="chk"><input type="checkbox" name="passengers"> Пассажирские линии (в городах и между ними)</label>
+        <label class="chk"><input type="checkbox" name="multimodal"> Перевалка через склады (смешанные цепочки)</label>
+        <label class="chk"><input type="checkbox" name="coverage"> Фаза 2: охватить остальное без убытка</label>
+        <div class="sep">Авторежим</div>
+        <label class="chk"><input type="checkbox" name="auto_calibrate"> Калибровка при каждом обновлении</label>
+        <label class="chk"><input type="checkbox" name="auto_dossier"> Подробный разбор маршрутов при обновлении</label>
+        <label class="chk"><input type="checkbox" name="notify_desktop"> Уведомления Windows (через браузер)</label>
+        <div class="form-foot">
+          <span class="muted small" id="settings-state"></span>
+          <button type="button" class="hbtn" id="btn-replan" title="Сохранить и пересчитать план">Сохранить и пересчитать</button>
+        </div>
+        <details class="env">
+          <summary>Как настройки попадают в планировщик</summary>
+          <div id="env-doc"></div>
+        </details>
+      </form>
+    </section>
+  </aside>
+</main>
+
+<div id="toasts"></div>
+<script src="/static/i18n.js"></script>
+<script src="/static/control.js"></script>
+</body>
+</html>
